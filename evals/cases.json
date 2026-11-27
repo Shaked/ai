@@ -1,0 +1,29 @@
+[
+  {
+    "id": "report-export",
+    "prompt": "Our reporting service has this handler:\n\ndef handle(product):\n    if product in {'studio', 'enterprise'}:\n        export_reports()\n\nStudio and Enterprise should still export reports, and Basic should still skip them. We're launching a fourth product whose team wants to be able to turn exports on at rollout. Show the Python and deployment settings you'd ship, with a short design note.",
+    "criteria": [
+      "Shared code uses a behavior-specific setting and has no product-name checks.",
+      "Studio and Enterprise export, while Basic and deployments missing the setting default to skipping export.",
+      "The fourth product can enable export in its deployment settings without shared-code edits."
+    ]
+  },
+  {
+    "id": "policy-scope",
+    "prompt": "Our policy renderer grants object:Get to Studio on reports/studio/* and to Enterprise on reports/enterprise/* by branching on product name. Basic has no grant from this renderer. A new product will need two prefixes, which its deployment manifest can supply. Show the renderer and manifest examples you'd ship. Existing access must stay the same.",
+    "criteria": [
+      "The shared renderer takes explicit configured resource scopes without branching on product.",
+      "Studio and Enterprise retain exactly their previous actions and prefixes.",
+      "An empty scope grants nothing, and listing two prefixes grants precisely those two prefixes."
+    ]
+  },
+  {
+    "id": "storage-adapter",
+    "prompt": "Our upload route constructs S3Storage when provider is aws and GcsStorage when it is gcp, then calls put on it. A long-running export worker needs the same storage behavior. Show how you would wire both callers and preserve the storage backend for existing deployments.",
+    "criteria": [
+      "Both callers use the same storage interface without provider-name branches.",
+      "A common factory, adapter, or setup boundary selects and initializes the backend from storage configuration.",
+      "The configuration preserves the existing AWS to S3 and GCP to GCS mappings."
+    ]
+  }
+]
