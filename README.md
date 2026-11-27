@@ -1,5 +1,7 @@
 # Skills
 
+## Code for Capabilities
+
 [Code for Capabilities](plugins/code-for-capabilities/skills/code-for-capabilities/SKILL.md)
 
 **Claude Code**
@@ -20,7 +22,31 @@ codex plugin add code-for-capabilities@shaked-plugins
 
 Select the skill with `$code-for-capabilities` when asking Codex to review a diff.
 
-**Local evals**
+## Templated Responses
+
+[Templated Responses](plugins/templated-responses/skills/templated-responses/SKILL.md) leads with a TLDR and numbered next steps. It includes human blockers and runnable instructions when they apply.
+
+From this checkout, add the local marketplace and install the plugin.
+
+**Codex**
+
+```sh
+codex plugin marketplace add .
+codex plugin add templated-responses@shaked-plugins
+```
+
+Example prompt: `$templated-responses Summarize this fix and show me how to verify it.`
+
+**Claude Code**
+
+```sh
+claude plugin marketplace add .
+claude plugin install templated-responses@shaked-plugins
+```
+
+Run `/templated-responses:templated-responses` with your request.
+
+## Local evals
 
 Sign in to Codex and Claude Code, then run `pre-commit install` with [pre-commit](https://pre-commit.com/#installation) installed. The hook runs for staged plugin, marketplace, or eval changes. Run `python3 evals/run.py` anytime and see `results.json` for the results.
 

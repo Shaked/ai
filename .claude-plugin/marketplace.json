@@ -7,9 +7,13 @@
     {
       "name": "code-for-capabilities",
       "source": "./plugins/code-for-capabilities"
+    },
+    {
+      "name": "templated-responses",
+      "source": "./plugins/templated-responses"
     }
   ],
   "metadata": {
-    "description": "Shaked's plugins for code and policy review."
+    "description": "Shaked's plugins for code and policy review and structured responses."
   }
 }
