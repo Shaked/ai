@@ -18,11 +18,11 @@ The Billing Portal and Analytics Dashboard both export reports. Enable `report_e
 |---|---|
 | `if product in {"billing-portal", "analytics-dashboard"}: export_reports()` | `if config.report_export_enabled: export_reports()` |
 | `if environment == "dev": show_stack_trace()` | `if config.show_stack_traces: show_stack_trace()` |
-| Run two workers in staging and sixteen in production by checking the environment name. | Start `config.worker_count` workers. Set the count per deployment. |
-| Redirect email to a sandbox inbox only when the environment is staging. | Configure `mail.recipient_override` for deployments that should send all mail to a sandbox inbox. |
-| Add an access rule for a named product in a shared policy template. | Render the same rule for each resource explicitly listed in `policy.read_resources`. An empty list grants no access through that rule. |
-| Select a cloud SDK by provider name in application code. | Pass `config.storage` to the storage factory. Select and initialize the SDK inside the factory or adapter. |
-| Branch on AWS versus GCP in a shared Kubernetes Ingress template. | Set the Ingress class and annotations in deployment configuration. Render those values in the shared template. |
-| Infer the locale for customer emails from the deployment region. | Use `config.default_locale` so deployments in the same region can use different defaults. |
+| `start_workers(2 if environment == "staging" else 16)` | `start_workers(config.worker_count)` |
+| `send_email("sandbox@example.com" if environment == "staging" else recipient, message)` | `send_email(config.mail.recipient_override or recipient, message)` |
+| `if product == "billing-portal": grant("object:Get", "reports/billing/*")` | `for resource in policy.read_resources: grant("object:Get", resource)` |
+| `storage = S3Storage() if provider == "aws" else GcsStorage()` | `storage = make_storage(config.storage)` |
+| `render_ingress(ingress_class="alb" if provider == "aws" else "nginx")` | `render_ingress(ingress_class=config.ingress.class_name, annotations=config.ingress.annotations)` |
+| `render_email(locale="fr-FR" if region == "eu-west-3" else "en-US")` | `render_email(locale=config.default_locale)` |
 
-Reuse existing settings and adapters. Keep deployment mappings in configuration or setup code. Verify that current deployments retain their behavior, including the exact actions and resources granted by rendered policies.
+Reuse existing settings and adapters. Keep deployment mappings in configuration or setup code. Select and initialize provider SDKs inside factories or adapters. Verify that current deployments retain their behavior, including the exact actions and resources granted by rendered policies. An empty resource list grants no access through its rule.
