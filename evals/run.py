@@ -1,17 +1,18 @@
-"""Run blinded skill comparisons using the providers' HTTPS APIs."""
+"""Run blinded skill comparisons using signed-in Codex and Claude Code CLIs."""
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 import json
+import shutil
+import subprocess
+import tempfile
 import os
 from pathlib import Path
 import random
 import re
-import urllib.error
-import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
-KEYS = {"openai": "OPENAI_API_KEY", "anthropic": "ANTHROPIC_API_KEY"}
+CLIS = {"openai": "codex", "anthropic": "claude"}
 INSTRUCTIONS = "Answer the engineering request with the code and configuration you would ship."
 FORBIDDEN = re.compile(
     r"\b(?:eval|test|judge|experiment|rubric|score|compare|benchmark|candidate|arena)\b",
@@ -40,35 +41,35 @@ def load_inputs():
 
 
 def complete(provider, model, system, prompt):
-    key = os.environ[KEYS[provider]]
-    payload = {"model": model, "messages": [{"role": "user", "content": prompt}]}
-    if provider == "openai":
-        url = "https://api.openai.com/v1/chat/completions"
-        headers = {"Authorization": f"Bearer {key}"}
-        payload["messages"].insert(0, {"role": "system", "content": system})
-        payload["max_completion_tokens"] = 4096
-    else:
-        url = "https://api.anthropic.com/v1/messages"
-        headers = {"x-api-key": key, "anthropic-version": "2023-06-01"}
-        payload.update(system=system, max_tokens=4096)
-    request = urllib.request.Request(
-        url, json.dumps(payload).encode(), {"Content-Type": "application/json", **headers}
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=120) as response:
-            data = json.load(response)
-    except urllib.error.HTTPError as error:
-        raise RuntimeError(f"{provider} request for {model} returned HTTP {error.code}") from error
-    if provider == "openai":
-        choice = data["choices"][0]
-        if choice["finish_reason"] != "stop":
-            raise ValueError(f"Incomplete OpenAI response for {model}")
-        result = choice["message"]["content"]
-    else:
-        if data["stop_reason"] != "end_turn":
-            raise ValueError(f"Incomplete Anthropic response for {model}")
-        result = "\n".join(block["text"] for block in data["content"] if block["type"] == "text")
-    if not result or not result.strip():
+    environment = os.environ.copy()
+    for name in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"):
+        environment.pop(name, None)
+    with tempfile.TemporaryDirectory(prefix="reporting-") as directory:
+        answer = Path(directory) / "response.txt"
+        if provider == "openai":
+            command = [
+                "codex", "-a", "never", "exec", "--ignore-user-config", "--ephemeral",
+                "--skip-git-repo-check", "--sandbox", "read-only", "--model", model,
+                "--output-last-message", str(answer), "-",
+            ]
+        else:
+            command = [
+                "claude", "--print", "--model", model, "--tools", "",
+                "--strict-mcp-config", "--setting-sources", "",
+                "--no-session-persistence",
+            ]
+        try:
+            process = subprocess.run(
+                command, input=f"{system}\n\n{prompt}", text=True, capture_output=True,
+                cwd=directory, env=environment, timeout=240, check=True,
+            )
+        except subprocess.CalledProcessError as error:
+            raise RuntimeError(
+                f"{CLIS[provider]} exited with status {error.returncode}. "
+                f"Check CLI sign-in and access to {model}."
+            ) from error
+        result = answer.read_text() if provider == "openai" else process.stdout
+    if not result.strip():
         raise ValueError(f"Empty {provider} response for {model}")
     return result
 
@@ -139,18 +140,18 @@ def run_case(case, skill, args, pool):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="Validate inputs offline")
-    parser.add_argument("--openai-model", default="gpt-4.1-mini")
-    parser.add_argument("--anthropic-model", default="claude-sonnet-4-6")
-    parser.add_argument("--judge-model", default="gpt-4.1")
+    parser.add_argument("--openai-model", default="gpt-5.4-mini")
+    parser.add_argument("--anthropic-model", default="sonnet")
+    parser.add_argument("--judge-model", default="gpt-5.4")
     parser.add_argument("--output", type=Path, default=Path("results.json"))
     args = parser.parse_args()
     skill, cases = load_inputs()
     if args.check:
         print(f"Validated skill and {len(cases)} cases")
         return 0
-    missing = [key for key in KEYS.values() if not os.getenv(key)]
+    missing = [cli for cli in CLIS.values() if not shutil.which(cli)]
     if missing:
-        parser.exit(2, f"Missing provider credentials: {', '.join(missing)}\n")
+        parser.exit(2, f"Install and sign in to the required CLIs: {', '.join(missing)}\n")
 
     results = []
     with ThreadPoolExecutor(max_workers=4) as pool:

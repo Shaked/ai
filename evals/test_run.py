@@ -39,13 +39,13 @@ class BlindedComparisonTest(unittest.TestCase):
                 result = run.run_case(case, skill, args, pool)
 
         self.assertEqual(len(calls), 5)
-        for provider in run.KEYS:
+        for provider in run.CLIS:
             contexts = [system for source, model, system, _ in calls
                         if source == provider and model != args.judge_model]
             self.assertCountEqual(contexts, [run.INSTRUCTIONS, f"{run.INSTRUCTIONS}\n\n{skill}"])
         self.assertEqual(
             {(answer["provider"], answer["with_skill"]) for answer in result["answers"].values()},
-            {(provider, variant) for provider in run.KEYS for variant in (False, True)},
+            {(provider, variant) for provider in run.CLIS for variant in (False, True)},
         )
 
 
