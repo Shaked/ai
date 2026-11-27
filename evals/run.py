@@ -3,13 +3,13 @@
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 import json
-import shutil
-import subprocess
-import tempfile
 import os
 from pathlib import Path
 import random
 import re
+import shutil
+import subprocess
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 CLIS = {"openai": "codex", "anthropic": "claude"}
@@ -42,7 +42,7 @@ def load_inputs():
 
 def complete(provider, model, system, prompt):
     environment = os.environ.copy()
-    for name in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"):
+    for name in ("OPENAI_API_KEY", "CODEX_API_KEY", "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"):
         environment.pop(name, None)
     with tempfile.TemporaryDirectory(prefix="reporting-") as directory:
         answer = Path(directory) / "response.txt"
@@ -64,10 +64,9 @@ def complete(provider, model, system, prompt):
                 cwd=directory, env=environment, timeout=240, check=True,
             )
         except subprocess.CalledProcessError as error:
-            raise RuntimeError(
-                f"{CLIS[provider]} exited with status {error.returncode}. "
-                f"Check CLI sign-in and access to {model}."
-            ) from error
+            details = (error.stderr or error.stdout).strip().splitlines()
+            reason = details[-1] if details else f"exit status {error.returncode}"
+            raise RuntimeError(f"{CLIS[provider]} failed for {model}: {reason}") from error
         result = answer.read_text() if provider == "openai" else process.stdout
     if not result.strip():
         raise ValueError(f"Empty {provider} response for {model}")
@@ -107,42 +106,44 @@ def run_case(case, skill, args, pool):
         for with_skill in (False, True)
     ]
     random.SystemRandom().shuffle(variants)
+    model_names = re.compile(
+        r"\b(?:" + "|".join([
+            re.escape(args.openai_model),
+            re.escape(args.anthropic_model),
+            r"openai|anthropic|(?:gpt|claude)(?:[-.]\w+)*",
+        ]) + r")\b",
+        re.IGNORECASE,
+    )
     submissions = {}
     for label, (provider, model, with_skill) in zip("ABCD", variants, strict=True):
         context = f"{INSTRUCTIONS}\n\n{skill}" if with_skill else INSTRUCTIONS
         future = pool.submit(complete, provider, model, context, case["prompt"])
         submissions[label] = (provider, model, with_skill, future)
 
-    answers = {}
-    for label, (_, _, _, future) in submissions.items():
-        answer = future.result()
-        for provider, model in [("openai", args.openai_model), ("anthropic", args.anthropic_model)]:
-            answer = re.sub(re.escape(model), "[model]", answer, flags=re.IGNORECASE)
-            name = r"\b(?:openai|gpt[\w.-]*)\b" if provider == "openai" else r"\b(?:anthropic|claude[\w.-]*)\b"
-            answer = re.sub(name, "[model]", answer, flags=re.IGNORECASE)
-        answers[label] = answer
-    grades = judge(case, answers, args.judge_model)
-    return {
-        "case": case,
-        "answers": {
-            label: {
-                "provider": provider,
-                "model": model,
-                "with_skill": with_skill,
-                "answer": future.result(),
-                "grade": grades[label],
-            }
-            for label, (provider, model, with_skill, future) in submissions.items()
-        },
+    answers = {
+        label: {
+            "provider": provider,
+            "model": model,
+            "with_skill": with_skill,
+            "answer": future.result(),
+        }
+        for label, (provider, model, with_skill, future) in submissions.items()
     }
+    blinded = {
+        label: model_names.sub("[model]", answer["answer"])
+        for label, answer in answers.items()
+    }
+    for label, grade in judge(case, blinded, args.judge_model).items():
+        answers[label]["grade"] = grade
+    return {"case": case, "answers": answers}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="Validate inputs offline")
-    parser.add_argument("--openai-model", default="gpt-5.4-mini")
+    parser.add_argument("--openai-model", default="gpt-6-luna")
     parser.add_argument("--anthropic-model", default="sonnet")
-    parser.add_argument("--judge-model", default="gpt-5.4")
+    parser.add_argument("--judge-model", default="gpt-6-sol")
     parser.add_argument("--output", type=Path, default=Path("results.json"))
     args = parser.parse_args()
     skill, cases = load_inputs()

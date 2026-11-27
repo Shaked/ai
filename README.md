@@ -4,10 +4,12 @@
 
 ## Local evals
 
-Sign in to Codex and Claude Code with your subscriptions, then enable the pre-commit hook once per clone.
+Sign in to Codex and Claude Code with your subscriptions. Install [pre-commit](https://pre-commit.com/#installation), then run:
 
 ```sh
-git config core.hooksPath .githooks
+pre-commit install
 ```
 
-The hook evaluates staged skill and eval changes and saves results to `results.json`. Run `python3 evals/run.py` to evaluate the working tree manually. GitHub Actions runs offline checks on pull requests and pushes to `main`.
+If you enabled the old hook, run `git config --local --unset core.hooksPath` before installing.
+
+The hook runs for staged skill or eval changes. Run `python3 evals/run.py` anytime and see `results.json` for the results.
