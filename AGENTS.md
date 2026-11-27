@@ -1,1 +1,3 @@
+Keep skills simple. Use a single `SKILL.md` for short skills.
+
 Keep plugins under `plugins/` and register each in both marketplaces. Add an eval suite for every skill and command under `evals/<plugin>/<skills|commands>/<name>.json`. Run `python3 evals/run.py --check` before opening a PR.
