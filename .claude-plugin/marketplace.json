@@ -1,0 +1,15 @@
+{
+  "name": "shaked-plugins",
+  "owner": {
+    "name": "Shaked"
+  },
+  "plugins": [
+    {
+      "name": "code-for-capabilities",
+      "source": "./plugins/code-for-capabilities"
+    }
+  ],
+  "metadata": {
+    "description": "Shaked's plugins for code and policy review."
+  }
+}

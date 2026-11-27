@@ -1,1 +1,1 @@
-Keep skills short. Run `python3 evals/run.py --check` before opening a PR.
+Keep plugins under `plugins/` and register each in both marketplaces. Add an eval suite for every skill and command under `evals/<plugin>/<skills|commands>/<name>.json`. Run `python3 evals/run.py --check` before opening a PR.

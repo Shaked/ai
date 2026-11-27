@@ -25,5 +25,14 @@
       "A common factory, adapter, or setup boundary selects and initializes the backend from storage configuration.",
       "The configuration preserves the existing AWS to S3 and GCP to GCS mappings."
     ]
+  },
+  {
+    "id": "stack-traces",
+    "prompt": "Our error renderer shows stack traces when environment == 'dev'. Staging and production only show a generic error. We already load diagnostics.show_stack_traces from each deployment's settings for another handler. A preview deployment now needs stack traces. Show the code and deployment configuration changes.",
+    "criteria": [
+      "Reuses diagnostics.show_stack_traces and removes the environment-name check from the shared renderer.",
+      "Preserves the existing behavior for development, staging, and production, with a safe default when the setting is omitted.",
+      "Enables traces for preview through deployment configuration without exposing them in other environments."
+    ]
   }
 ]

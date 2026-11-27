@@ -1,15 +1,27 @@
 # Skills
 
-[Code for Capabilities](skills/code-for-capabilities/SKILL.md)
+[Code for Capabilities](plugins/code-for-capabilities/skills/code-for-capabilities/SKILL.md)
 
-## Local evals
-
-Sign in to Codex and Claude Code with your subscriptions. Install [pre-commit](https://pre-commit.com/#installation), then run:
+**Claude Code**
 
 ```sh
-pre-commit install
+claude plugin marketplace add Shaked/skills
+claude plugin install code-for-capabilities@shaked-plugins
 ```
 
-If you enabled the old hook, run `git config --local --unset core.hooksPath` before installing.
+Run `/code-for-capabilities:review-capabilities` to review a diff.
 
-The hook runs for staged skill or eval changes. Run `python3 evals/run.py` anytime and see `results.json` for the results.
+**Codex**
+
+```sh
+codex plugin marketplace add Shaked/skills
+codex plugin add code-for-capabilities@shaked-plugins
+```
+
+Select the skill with `$code-for-capabilities` when asking Codex to review a diff.
+
+**Local evals**
+
+Sign in to Codex and Claude Code, then run `pre-commit install` with [pre-commit](https://pre-commit.com/#installation) installed. The hook runs for staged plugin, marketplace, or eval changes. Run `python3 evals/run.py` anytime and see `results.json` for the results.
+
+If you installed the original Git hook, run `git config --local --unset core.hooksPath` before installing pre-commit.

@@ -1,0 +1,12 @@
+[
+  {
+    "id": "review-shared-logic",
+    "prompt": "Can you look over this diff before I commit? In shared/routes.py:42 I added `if product == 'studio': export_reports()`. In deploy/studio.yml I added `provider: aws`, and in storage/factory.py I select S3Storage for aws. Only Studio should export today, and another product may get exports soon. Tell me what to change.",
+    "criteria": [
+      "Reports the product-specific report export check at shared/routes.py:42 as an actionable finding.",
+      "Recommends a report export setting in deployment configuration that preserves Studio's current access and lets another product opt in.",
+      "Treats the deployment provider setting and SDK selection in the storage factory as valid.",
+      "Returns review findings without claiming to have edited the repository."
+    ]
+  }
+]

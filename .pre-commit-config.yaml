@@ -1,9 +1,9 @@
 repos:
   - repo: local
     hooks:
-      - id: skill-evals
-        name: Skill evals
+      - id: plugin-evals
+        name: Plugin evals
         entry: python3 evals/run.py
         language: system
-        files: ^(skills/|evals/|\.pre-commit-config\.yaml$)
+        files: ^(plugins/|evals/|\.agents/plugins/|\.claude-plugin/|\.pre-commit-config\.yaml$)
         pass_filenames: false
