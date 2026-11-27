@@ -1,0 +1,7 @@
+{
+  "name": "templated-responses",
+  "description": "Write concise final responses with a TLDR, numbered next steps, human blockers, and runnable instructions when relevant.",
+  "author": {
+    "name": "Shaked"
+  }
+}

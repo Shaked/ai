@@ -1,0 +1,42 @@
+[
+  {
+    "id": "completed-cleanup",
+    "prompt": "Write the final handoff from these notes. Removed two obsolete redirects at /repo/config/routes.yml, line 18. All 24 routing checks passed. The patch is already merged and released. There is no follow-up or user-facing workflow.",
+    "criteria": [
+      "Starts with a TLDR of at most two sentences giving the outcome and the 24 passing checks.",
+      "Uses a descriptive Markdown link to /repo/config/routes.yml:18 for the change.",
+      "Includes Next and makes clear no action remains without inventing a list item.",
+      "Omits the human blocker and reproduction or usage sections."
+    ]
+  },
+  {
+    "id": "blocked-release",
+    "prompt": "Report release status. CLI v2.4.0 is built and the checksum matches. Publication is paused because only the release manager can approve the signing request SIG-184 in the Signing dashboard. After approval, the release automation must publish v2.4.0 to the package registry, then confirm the registry serves v2.4.0. No commands are available yet.",
+    "criteria": [
+      "Starts with a TLDR that says the verified build is ready and publication is paused.",
+      "Uses a numbered Next list that puts publishing before registry verification and makes approval a prerequisite.",
+      "Uses Blocked (needs human) to name the release manager and request approval of SIG-184 in the Signing dashboard.",
+      "Does not duplicate the approval request, claim publication happened, or add a reproduction or usage section."
+    ]
+  },
+  {
+    "id": "reproduce-failure",
+    "prompt": "Summarize this incident for the maintainer. On a dev checkout with Docker and the stack running, I ran docker compose exec api ./bin/export --date 2026-02-30. It exited 1 and printed 'panic: invalid date'. The verified issue link is https://issues.example.com/EXPORT-27. The intended behavior is a validation message. The maintainer should fix validation, then rerun the same command.",
+    "criteria": [
+      "Leads with the observed invalid-date failure and places the verified issue link beside the relevant claim.",
+      "Uses a numbered Next list for the fix and rerun in order, without repeating the command.",
+      "Uses How to reproduce with the prerequisites, the exact command in a language-tagged code fence, and the observed exit and message outside the command block.",
+      "Distinguishes the observed panic from the desired validation message and omits the human blocker section."
+    ]
+  },
+  {
+    "id": "usage-handoff",
+    "prompt": "Write a concise handoff for the new read-only queue command. With a configured CLI, run queue inspect --pending. It prints a table of pending jobs without claiming any. The command shipped and there are no remaining actions.",
+    "criteria": [
+      "Starts with a short TLDR describing the shipped command and what it does.",
+      "Includes Next and makes clear no action remains without inventing a list item.",
+      "Uses How to use with the configured CLI prerequisite and a fenced command block containing queue inspect --pending.",
+      "States what the reader should see and omits the human blocker section."
+    ]
+  }
+]
